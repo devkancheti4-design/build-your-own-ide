@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bitlens: build your own IDE</title>
+    <meta name="description" content="Step through real programs one machine instruction at a time, from the 64 bits of a number to the attention inside a transformer." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='15' font-weight='700' fill='white' text-anchor='middle'%3E01%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#/" aria-label="Bitlens home"><span class="logo">01</span> Bitlens</a>
+      <nav id="lab-controls" class="controls" hidden aria-label="Machine controls">
+        <a class="btn ghost" href="#/" title="Back to the map">◀ Map</a>
+        <button id="run-btn" class="primary" data-ins="ctl:run" title="Run or pause (⌘/Ctrl+Enter)">Run</button>
+        <button id="step-btn" data-ins="ctl:step" title="Run one instruction (⌘/Ctrl+')">Step</button>
+        <button id="line-btn" data-ins="ctl:line" title="Run until the line changes (⌘/Ctrl+Shift+')">Step line</button>
+        <button id="reset-btn" data-ins="ctl:reset" title="Back to the first instruction">Reset</button>
+        <label class="speed" data-ins="ctl:speed" title="Animation speed">
+          <span class="small muted">Speed</span>
+          <input id="speed" type="range" min="0" max="4" value="4" aria-label="Speed" />
+        </label>
+        <label class="toggle" data-ins="ctl:predict" title="Guess each result before you see it">
+          <input id="predict" type="checkbox" /> Predict
+        </label>
+        <span id="status" class="status small" aria-live="polite"></span>
+      </nav>
+      <div class="right">
+        <button id="search-btn" class="ghost" title="Search (⌘/Ctrl+K)">Search <kbd>⌘K</kbd></button>
+        <button id="inspect-btn" class="ghost" data-inspect-toggle aria-pressed="false" title="Hover anything to see what's underneath">Inspect</button>
+        <button id="theme-btn" class="ghost" title="Theme">Auto</button>
+        <div id="xp" class="xp"></div>
+      </div>
+    </header>
+
+    <main id="map-view">
+      <section class="hero">
+        <p class="eyebrow">Build your own IDE · from bits to transformers</p>
+        <h1>Take the computer apart, one instruction at a time.</h1>
+        <p class="lede">
+          Write a program, compile it to bytecode, and step through a real virtual machine. Click any value to see its 64 bits. Then climb from floating-point
+          rounding to backpropagation, Adam and attention, running every formula yourself.
+        </p>
+        <div class="hero-actions">
+          <a id="continue" class="btn primary big" href="#/level/1">Start the journey</a>
+          <button class="btn ghost big" onclick="document.getElementById('search-btn').click()">Search concepts</button>
+        </div>
+        <div id="map-stats" class="stats"></div>
+      </section>
+      <div id="journey" class="journey"></div>
+      <footer class="map-foot muted small">
+        Built from scratch: a lexer, parser, compiler and virtual machine in Rust, compiled to WebAssembly, with a TypeScript IDE on top. Every level's formulas
+        link to the papers they come from.
+      </footer>
+    </main>
+
+    <main id="lab-view" class="lab" hidden>
+      <div class="col col-a">
+        <section class="panel lesson-panel">
+          <div class="panel-head" data-ins="panel:lesson"><span>Lesson</span><button id="lesson-toggle" class="link small">Hide</button></div>
+          <div id="lesson" class="panel-body lesson"></div>
+        </section>
+        <section class="panel editor-panel">
+          <div class="panel-head" data-ins="panel:editor">
+            <span>Code <span id="file-name" class="muted small"></span></span>
+            <button id="reset-code" class="link small" title="Restore the original program">Reset code</button>
+          </div>
+          <div id="editor-host" class="editor-host"></div>
+          <div id="compile-status" class="compile-status"></div>
+        </section>
+        <section class="panel output-panel">
+          <div class="panel-head" data-ins="panel:output"><span>Output</span></div>
+          <pre id="output" class="output"></pre>
+        </section>
+      </div>
+
+      <div class="col col-b">
+        <section class="panel bytecode-panel">
+          <div class="panel-head" data-ins="panel:bytecode"><span>Bytecode</span><span class="muted small">hover a row to see its source</span></div>
+          <div id="bytecode" class="panel-body bytecode"></div>
+        </section>
+        <section class="panel assist-panel">
+          <div class="panel-head tabs" data-tabs="assist" role="tablist">
+            <button data-tab="explain" class="on" role="tab" aria-selected="true" data-ins="panel:explain">Explain</button>
+            <button data-tab="chat" role="tab" aria-selected="false">Ask AI</button>
+          </div>
+          <div id="explain" class="panel-body explain" role="tabpanel"></div>
+          <div id="chat" class="panel-body chat-host" role="tabpanel" hidden></div>
+        </section>
+      </div>
+
+      <div class="col col-c">
+        <section class="panel machine-panel">
+          <div class="panel-head tabs" data-tabs="machine" role="tablist">
+            <button data-tab="stack" class="on" role="tab" aria-selected="true" data-ins="panel:stack">Stack</button>
+            <button data-tab="globals" role="tab" aria-selected="false" data-ins="panel:globals">Globals</button>
+            <button data-tab="heap" role="tab" aria-selected="false" data-ins="panel:heap">Heap</button>
+          </div>
+          <div id="stack" class="panel-body values" role="tabpanel"></div>
+          <div id="globals" class="panel-body values" role="tabpanel" hidden></div>
+          <div id="heap" class="panel-body values" role="tabpanel" hidden></div>
+        </section>
+        <section class="panel visual-panel">
+          <div class="panel-head tabs" data-tabs="visual" role="tablist">
+            <button data-tab="bits" class="on" role="tab" aria-selected="true" data-ins="panel:bits">Bits</button>
+            <button data-tab="charts" role="tab" aria-selected="false" data-ins="panel:charts">Charts</button>
+          </div>
+          <div id="bits" class="panel-body bits" role="tabpanel"></div>
+          <div id="charts" class="panel-body charts" role="tabpanel" hidden></div>
+        </section>
+      </div>
+    </main>
+
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

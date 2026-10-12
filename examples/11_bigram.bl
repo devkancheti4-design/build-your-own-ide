@@ -1,0 +1,62 @@
+// Level 11: A tiny language model
+// Count which word follows which (a bigram model, the idea Shannon used in
+// 1948 to imitate English), then write new text by sampling the next word
+// from those counts. Large language models do the same job: predict the
+// next token. They just use a transformer instead of a table of counts.
+
+let vocab = ["<s>", "the", "cat", "dog", "sat", "ran", "on", "mat", "rug", "."];
+// "the cat sat on the mat . the dog sat on the rug . the cat ran ."
+// written as word ids (indexes into vocab):
+let corpus = [0, 1, 2, 4, 6, 1, 7, 9, 1, 3, 4, 6, 1, 8, 9, 1, 2, 5, 9];
+let V = len(vocab);
+
+// counts[a][b] = how often word b came right after word a
+let counts = [];
+for (let a = 0; a < V; a += 1) {
+  push(counts, array(V, 0));
+}
+for (let i = 0; i + 1 < len(corpus); i += 1) {
+  counts[corpus[i]][corpus[i + 1]] += 1;
+}
+heatmap("bigram counts (row = previous word, column = next word)", counts);
+
+// P(next = b | previous = a) = counts[a][b] / (total count of row a)
+fn prob(a, b) {
+  let total = 0;
+  for (let j = 0; j < V; j += 1) {
+    total += counts[a][j];
+  }
+  if (total == 0) {
+    return 0;
+  }
+  return counts[a][b] / total;
+}
+
+// Sampling: walk through the probabilities until they add up past r.
+fn sample_next(a) {
+  let r = random();
+  let acc = 0;
+  for (let b = 0; b < V; b += 1) {
+    acc += prob(a, b);
+    if (r < acc) {
+      return b;
+    }
+  }
+  return 1;
+}
+
+let word = 1;   // start with "the"
+let text = vocab[word];
+for (let i = 0; i < 15; i += 1) {
+  word = sample_next(word);
+  text = text + " " + vocab[word];
+}
+print(text);
+
+// Perplexity = exp(average surprise). 1 would mean perfectly predictable.
+let nll = 0;
+for (let i = 0; i + 1 < len(corpus); i += 1) {
+  nll -= log(prob(corpus[i], corpus[i + 1]));
+}
+let perplexity = exp(nll / (len(corpus) - 1));
+print("perplexity on the corpus:", perplexity);

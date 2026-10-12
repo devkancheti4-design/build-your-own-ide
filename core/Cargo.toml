@@ -1,0 +1,16 @@
+[package]
+name = "bitlens-core"
+version = "0.1.0"
+edition = "2024"
+description = "The engine behind Bitlens: lexer, parser, bytecode compiler and a VM you can pause after every instruction"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "bitlens"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = "s"
+lto = true

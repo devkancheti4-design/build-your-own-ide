@@ -1,0 +1,67 @@
+// Level 8: Backpropagation (Rumelhart, Hinton & Williams, 1986)
+// One neuron can't learn XOR. A hidden layer can, if we train it with
+// backprop: run forward, measure the error, then push the blame for that
+// error backwards through every weight with the chain rule.
+
+let X = [[0, 0], [0, 1], [1, 0], [1, 1]];
+let Y = [0, 1, 1, 0];   // XOR
+let H = 3;              // hidden neurons
+let lr = 0.5;
+
+fn sigmoid(z) {
+  return 1 / (1 + exp(-z));
+}
+
+fn rand_weight() {
+  return random() * 2 - 1;   // uniform in [-1, 1)
+}
+
+let w1 = [];   // w1[j]: the two input weights of hidden neuron j
+let b1 = [];
+let w2 = [];   // w2[j]: weight from hidden neuron j to the output
+for (let j = 0; j < H; j += 1) {
+  push(w1, [rand_weight(), rand_weight()]);
+  push(b1, rand_weight());
+  push(w2, rand_weight());
+}
+let b2 = rand_weight();
+let h = array(H, 0);   // hidden activations, filled in by forward()
+
+fn forward(x) {
+  let z = b2;
+  for (let j = 0; j < H; j += 1) {
+    h[j] = sigmoid(w1[j][0] * x[0] + w1[j][1] * x[1] + b1[j]);
+    z += w2[j] * h[j];
+  }
+  return sigmoid(z);
+}
+
+let loss = 0;
+for (let epoch = 0; epoch < 3000; epoch += 1) {
+  loss = 0;
+  for (let i = 0; i < 4; i += 1) {
+    let x = X[i];
+    let out = forward(x);
+    let err = out - Y[i];
+    loss += err * err / 4;
+    // Output delta: dLoss/dz for the output neuron (sigmoid' = s * (1 - s)).
+    let d_out = err * out * (1 - out);
+    for (let j = 0; j < H; j += 1) {
+      // Hidden delta: the output's blame, sent back through w2[j].
+      let d_h = d_out * w2[j] * h[j] * (1 - h[j]);
+      w2[j] -= lr * d_out * h[j];
+      w1[j][0] -= lr * d_h * x[0];
+      w1[j][1] -= lr * d_h * x[1];
+      b1[j] -= lr * d_h;
+    }
+    b2 -= lr * d_out;
+  }
+  if (epoch % 10 == 0) {
+    plot("loss", epoch, loss);
+  }
+}
+
+print("final loss:", loss);
+for (let i = 0; i < 4; i += 1) {
+  print(X[i], "->", forward(X[i]));
+}

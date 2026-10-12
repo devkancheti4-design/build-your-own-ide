@@ -1,0 +1,25 @@
+{
+  "name": "bitlens-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "wasm": "cd ../core && cargo build --lib --release --target wasm32-unknown-unknown && cp target/wasm32-unknown-unknown/release/bitlens_core.wasm ../web/public/bitlens.wasm",
+    "dev": "npm run wasm && vite",
+    "build": "npm run wasm && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "check": "tsc --noEmit",
+    "verify": "npm run wasm && node scripts/verify.ts",
+    "serve": "vite --port 5179 --strictPort"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.8",
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "katex": "^0.19.0"
+  }
+}

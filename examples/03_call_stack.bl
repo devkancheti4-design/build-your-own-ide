@@ -1,0 +1,14 @@
+// Level 3: The call stack
+// Every call gets a frame: a window onto the stack that holds its
+// parameters and locals. Step into fib and watch the frames pile up.
+
+fn fib(n) {
+  if (n < 2) {
+    return n;
+  }
+  return fib(n - 1) + fib(n - 2);
+}
+
+let result = fib(6);
+print("fib(6) =", result);
+print("instructions used:", steps());

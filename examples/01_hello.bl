@@ -1,0 +1,20 @@
+// Level 1: Hello, machine
+// Press Step to run ONE machine instruction. Watch three things change:
+// the highlighted code, the bytecode list, and the stack.
+
+let x = 6;
+let y = 7;
+let answer = x * y;
+print("the answer is", answer);
+
+if (answer > 40) {
+  print("bigger than 40");
+} else {
+  print("40 or less");
+}
+
+let i = 0;
+while (i < 3) {
+  print("loop", i);
+  i += 1;
+}

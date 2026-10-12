@@ -1,0 +1,61 @@
+// Level 10: Adam (Kingma & Ba, 2014)
+// Minimize the Rosenbrock "banana" function: a long, curved, narrow valley
+// that makes plain gradient descent crawl. The minimum is at (1, 1).
+
+fn f(x, y) {
+  return (1 - x) * (1 - x) + 100 * (y - x * x) * (y - x * x);
+}
+fn grad_x(x, y) {
+  return -2 * (1 - x) - 400 * x * (y - x * x);
+}
+fn grad_y(x, y) {
+  return 200 * (y - x * x);
+}
+
+let T = 1500;
+
+// Plain gradient descent: step straight downhill.
+let x = -1.5;
+let y = 2;
+let lr = 0.0005;
+for (let t = 1; t <= T; t += 1) {
+  let gx = grad_x(x, y);
+  let gy = grad_y(x, y);
+  x -= lr * gx;
+  y -= lr * gy;
+  if (t % 10 == 0) {
+    plot("log loss", t, log(f(x, y)), "gradient descent");
+  }
+}
+
+// Adam: momentum (m) plus a per-parameter step size (v).
+let ax = -1.5;
+let ay = 2;
+let alpha = 0.02;
+let beta1 = 0.9;
+let beta2 = 0.999;
+let eps = 1e-8;
+let mx = 0;
+let my = 0;
+let vx = 0;
+let vy = 0;
+for (let t = 1; t <= T; t += 1) {
+  let gx = grad_x(ax, ay);
+  let gy = grad_y(ax, ay);
+  mx = beta1 * mx + (1 - beta1) * gx;        // 1st moment: running mean of gradients
+  my = beta1 * my + (1 - beta1) * gy;
+  vx = beta2 * vx + (1 - beta2) * gx * gx;   // 2nd moment: running mean of squares
+  vy = beta2 * vy + (1 - beta2) * gy * gy;
+  let mhx = mx / (1 - pow(beta1, t));        // bias correction (both start at 0)
+  let mhy = my / (1 - pow(beta1, t));
+  let vhx = vx / (1 - pow(beta2, t));
+  let vhy = vy / (1 - pow(beta2, t));
+  ax -= alpha * mhx / (sqrt(vhx) + eps);
+  ay -= alpha * mhy / (sqrt(vhy) + eps);
+  if (t % 10 == 0) {
+    plot("log loss", t, log(f(ax, ay)), "Adam");
+  }
+}
+
+print("gradient descent ended at (", x, ",", y, ")  loss", f(x, y));
+print("Adam ended at             (", ax, ",", ay, ")  loss", f(ax, ay));

@@ -1,0 +1,56 @@
+// Level 7: k-means clustering (Lloyd)
+// No labels: the algorithm finds the groups by itself. Repeat two steps:
+// assign every point to its nearest centroid, then move every centroid
+// to the mean of its points.
+
+let px = [1.0, 1.5, 3.0, 5.0, 3.5, 4.5, 3.5, 1.2, 5.2, 0.8];
+let py = [1.0, 2.0, 4.0, 7.0, 5.0, 5.0, 4.5, 1.4, 6.5, 1.8];
+let k = 2;
+let cx = [px[0], px[1]];   // two deliberately bad starting centroids
+let cy = [py[0], py[1]];
+let group = array(len(px), 0);
+
+fn dist2(x1, y1, x2, y2) {
+  let dx = x1 - x2;
+  let dy = y1 - y2;
+  return dx * dx + dy * dy;
+}
+
+for (let iter = 0; iter < 6; iter += 1) {
+  // 1. Assignment step: nearest centroid wins.
+  for (let i = 0; i < len(px); i += 1) {
+    let best = 0;
+    for (let c = 1; c < k; c += 1) {
+      if (dist2(px[i], py[i], cx[c], cy[c]) < dist2(px[i], py[i], cx[best], cy[best])) {
+        best = c;
+      }
+    }
+    group[i] = best;
+  }
+  // 2. Update step: each centroid moves to the mean of its points.
+  for (let c = 0; c < k; c += 1) {
+    let sx = 0;
+    let sy = 0;
+    let count = 0;
+    for (let i = 0; i < len(px); i += 1) {
+      if (group[i] == c) {
+        sx += px[i];
+        sy += py[i];
+        count += 1;
+      }
+    }
+    if (count > 0) {
+      cx[c] = sx / count;
+      cy[c] = sy / count;
+    }
+  }
+  clearplot("clusters");
+  for (let i = 0; i < len(px); i += 1) {
+    scatter("clusters", px[i], py[i], group[i]);
+  }
+  for (let c = 0; c < k; c += 1) {
+    scatter("clusters", cx[c], cy[c], -1);   // group -1 draws a centroid
+  }
+  print("iteration", iter, " centroids x:", cx, " y:", cy);
+}
+print("groups:", group);

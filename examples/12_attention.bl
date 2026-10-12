@@ -1,0 +1,56 @@
+// Level 12: Attention (Vaswani et al., 2017)
+// Every token asks a question (its query), offers a label (its key) and
+// carries content (its value). Each token's output is a blend of all the
+// values, weighted by how well its query matches each key:
+//   Attention(Q, K, V) = softmax(Q Kᵀ / √d) V
+
+let tokens = ["the", "cat", "sat"];
+let d = 2;
+// In a real model these come from learned weights; here they are hand-picked.
+let Q = [[1, 0], [0, 1], [1, 1]];
+let K = [[1, 0], [0, 2], [1, 1]];
+let V = [[1, 0], [0, 1], [0.5, 0.5]];
+let n = len(tokens);
+
+fn softmax(z) {
+  let m = z[0];
+  for (let i = 1; i < len(z); i += 1) {
+    m = max(m, z[i]);
+  }
+  let p = array(len(z), 0);
+  let total = 0;
+  for (let i = 0; i < len(z); i += 1) {
+    p[i] = exp(z[i] - m);
+    total += p[i];
+  }
+  for (let i = 0; i < len(z); i += 1) {
+    p[i] /= total;
+  }
+  return p;
+}
+
+let weights = [];
+let out = [];
+for (let i = 0; i < n; i += 1) {
+  // Score: how well does token i's query match each key?
+  let scores = array(n, 0);
+  for (let j = 0; j < n; j += 1) {
+    let dot = 0;
+    for (let k = 0; k < d; k += 1) {
+      dot += Q[i][k] * K[j][k];
+    }
+    scores[j] = dot / sqrt(d);   // scale so big d doesn't saturate softmax
+  }
+  let w = softmax(scores);
+  push(weights, w);
+  // Blend the values with those weights.
+  let o = array(d, 0);
+  for (let j = 0; j < n; j += 1) {
+    for (let k = 0; k < d; k += 1) {
+      o[k] += w[j] * V[j][k];
+    }
+  }
+  push(out, o);
+  print(tokens[i], "attends with", w, "-> output", o);
+}
+heatmap("attention weights (row = token, column = attends to)", weights);

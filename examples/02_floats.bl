@@ -1,0 +1,24 @@
+// Level 2: Numbers are bits
+// Every number is a 64-bit IEEE-754 double. Click any value on the stack
+// or in Globals to see its sign, exponent and mantissa bits.
+
+let a = 0.1;
+let b = 0.2;
+let sum = a + b;
+print("0.1 + 0.2 =", sum);            // 0.30000000000000004
+print("equal to 0.3?", sum == 0.3);   // false!
+
+// A double has 53 bits of precision. Past 2^53, not every integer fits.
+let big = 9007199254740992;           // 2^53
+print("2^53 + 1 =", big + 1);         // the +1 is rounded away
+
+// Dividing by zero isn't an error for floats: IEEE-754 defines the answer.
+print("1 / 0 =", 1 / 0);
+print("0 / 0 =", 0 / 0);
+
+// There are two zeros. They compare equal, but their sign bits differ.
+let negzero = -0;
+print("-0 == 0?", negzero == 0);
+
+// Overflow saturates to Infinity.
+print("1e308 * 10 =", 1e308 * 10);

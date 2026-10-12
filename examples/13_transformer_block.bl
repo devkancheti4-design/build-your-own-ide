@@ -1,0 +1,145 @@
+// Level 13: A transformer block
+// The repeating unit of GPT-style models, from scratch:
+//   x  = embedding + positional encoding
+//   x1 = LayerNorm(x + SelfAttention(x))
+//   x2 = LayerNorm(x1 + FeedForward(x1))
+// (The original "post-norm" layout from Vaswani et al., 2017.)
+
+let words = ["bits", "become", "thoughts"];
+let n = len(words);
+let d = 4;    // model width
+let dff = 8;  // feed-forward hidden width
+
+// ---- small matrix toolkit ----
+fn matmul(A, B) {
+  let C = [];
+  for (let i = 0; i < len(A); i += 1) {
+    let row = array(len(B[0]), 0);
+    for (let j = 0; j < len(B[0]); j += 1) {
+      let s = 0;
+      for (let k = 0; k < len(B); k += 1) {
+        s += A[i][k] * B[k][j];
+      }
+      row[j] = s;
+    }
+    push(C, row);
+  }
+  return C;
+}
+fn transpose(A) {
+  let T = [];
+  for (let j = 0; j < len(A[0]); j += 1) {
+    let row = array(len(A), 0);
+    for (let i = 0; i < len(A); i += 1) {
+      row[i] = A[i][j];
+    }
+    push(T, row);
+  }
+  return T;
+}
+fn add(A, B) {
+  let C = [];
+  for (let i = 0; i < len(A); i += 1) {
+    let row = array(len(A[0]), 0);
+    for (let j = 0; j < len(A[0]); j += 1) {
+      row[j] = A[i][j] + B[i][j];
+    }
+    push(C, row);
+  }
+  return C;
+}
+fn random_matrix(rows, cols) {
+  let M = [];
+  for (let i = 0; i < rows; i += 1) {
+    let row = array(cols, 0);
+    for (let j = 0; j < cols; j += 1) {
+      row[j] = (random() * 2 - 1) / sqrt(rows);   // scaled init keeps signals stable
+    }
+    push(M, row);
+  }
+  return M;
+}
+fn softmax(z) {
+  let m = z[0];
+  for (let i = 1; i < len(z); i += 1) {
+    m = max(m, z[i]);
+  }
+  let p = array(len(z), 0);
+  let total = 0;
+  for (let i = 0; i < len(z); i += 1) {
+    p[i] = exp(z[i] - m);
+    total += p[i];
+  }
+  for (let i = 0; i < len(z); i += 1) {
+    p[i] /= total;
+  }
+  return p;
+}
+// LayerNorm (Ba et al., 2016): rescale each row to mean 0, variance 1.
+fn layer_norm(A) {
+  let out = [];
+  for (let i = 0; i < len(A); i += 1) {
+    let mean = 0;
+    for (let j = 0; j < len(A[i]); j += 1) {
+      mean += A[i][j] / len(A[i]);
+    }
+    let variance = 0;
+    for (let j = 0; j < len(A[i]); j += 1) {
+      variance += (A[i][j] - mean) * (A[i][j] - mean) / len(A[i]);
+    }
+    let row = array(len(A[i]), 0);
+    for (let j = 0; j < len(A[i]); j += 1) {
+      row[j] = (A[i][j] - mean) / sqrt(variance + 0.00001);
+    }
+    push(out, row);
+  }
+  return out;
+}
+
+// ---- 1. embeddings + sinusoidal positional encoding ----
+let E = [[0.9, 0.1, -0.4, 0.3], [-0.2, 0.8, 0.5, -0.1], [0.4, -0.6, 0.2, 0.9]];
+let PE = [];
+for (let pos = 0; pos < n; pos += 1) {
+  let row = array(d, 0);
+  for (let i = 0; i < d; i += 2) {
+    let angle = pos / pow(10000, i / d);
+    row[i] = sin(angle);
+    row[i + 1] = cos(angle);
+  }
+  push(PE, row);
+}
+let x = add(E, PE);
+
+// ---- 2. self-attention ----
+let Wq = random_matrix(d, d);
+let Wk = random_matrix(d, d);
+let Wv = random_matrix(d, d);
+let Q = matmul(x, Wq);
+let K = matmul(x, Wk);
+let V = matmul(x, Wv);
+let scores = matmul(Q, transpose(K));
+let A = [];
+for (let i = 0; i < n; i += 1) {
+  for (let j = 0; j < n; j += 1) {
+    scores[i][j] /= sqrt(d);
+  }
+  push(A, softmax(scores[i]));
+}
+heatmap("attention", A);
+let x1 = layer_norm(add(x, matmul(A, V)));   // residual + norm
+
+// ---- 3. feed-forward network: ReLU(x W1) W2 ----
+let W1 = random_matrix(d, dff);
+let W2 = random_matrix(dff, d);
+let hidden = matmul(x1, W1);
+for (let i = 0; i < n; i += 1) {
+  for (let j = 0; j < dff; j += 1) {
+    hidden[i][j] = max(0, hidden[i][j]);   // ReLU
+  }
+}
+let x2 = layer_norm(add(x1, matmul(hidden, W2)));   // residual + norm
+
+heatmap("block output (row = token, column = feature)", x2);
+for (let i = 0; i < n; i += 1) {
+  print(words[i], "->", x2[i]);
+}

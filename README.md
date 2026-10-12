@@ -2,6 +2,8 @@
 
 **Bitlens** is a programming environment you build from scratch to see what's really going on inside a computer. You write a program, compile it to bytecode, and step through a virtual machine one instruction at a time, clicking any value to see its 64 bits. Then you climb a 13-level journey from floating-point rounding to backpropagation, Adam and attention, running every formula yourself.
 
+**▶ [Play it in your browser](https://devkancheti4-design.github.io/build-your-own-ide/)** · **📖 [Start the tutorial](tutorial/00-introduction.md)**
+
 It comes with a **step-by-step tutorial** that walks through building every part:
 
 - a language with its own **lexer, parser and bytecode compiler** (Rust, zero dependencies),
@@ -101,3 +103,7 @@ examples/    the 13 level programs
 web/         TypeScript IDE (Vite): editor, panels, bit inspector, charts, levels, game, search, AI tutor
 tutorial/    the step-by-step guide
 ```
+
+## License
+
+[MIT](LICENSE)

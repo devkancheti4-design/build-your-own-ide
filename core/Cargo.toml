@@ -2,6 +2,7 @@
 name = "bitlens-core"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
 description = "The engine behind Bitlens: lexer, parser, bytecode compiler and a VM you can pause after every instruction"
 
 [lib]

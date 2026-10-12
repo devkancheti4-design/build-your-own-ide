@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "wasm": "cd ../core && cargo build --lib --release --target wasm32-unknown-unknown && cp target/wasm32-unknown-unknown/release/bitlens_core.wasm ../web/public/bitlens.wasm",
+    "wasm": "cd ../core && cargo build --lib --release --target wasm32-unknown-unknown && mkdir -p ../web/public && cp target/wasm32-unknown-unknown/release/bitlens_core.wasm ../web/public/bitlens.wasm",
     "dev": "npm run wasm && vite",
     "build": "npm run wasm && tsc --noEmit && vite build",
     "preview": "vite preview",
